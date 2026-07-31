@@ -36,11 +36,10 @@ RUN --mount=type=cache,id=sub2api-pnpm-store,target=/root/.local/share/pnpm/stor
 
 # Copy frontend source and build.
 # LegalDocumentView.vue (admin-compliance gate) build-time imports
-# ../../../../docs/legal/*.md?raw, so docs/legal/ must sit beside frontend/
-# in the image (WORKDIR /app/frontend -> resolves to /app/docs/legal/*.md).
-# Copy only that subtree to keep the build dependency minimal.
+# frontend/docs/legal/*.md?raw. Keep this subtree inside frontend/ so hosted
+# build uploaders that prune root docs/ still include the legal markdown.
 COPY frontend/ ./
-COPY docs/legal/ /app/docs/legal/
+COPY frontend/docs/legal/ /app/docs/legal/
 RUN pnpm run build
 
 # -----------------------------------------------------------------------------
