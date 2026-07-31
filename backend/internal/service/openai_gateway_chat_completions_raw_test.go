@@ -206,6 +206,38 @@ func TestForwardAsRawChatCompletions_NonStreamingCapturesCacheWriteUsage(t *test
 	}
 }
 
+func TestForwardAsRawChatCompletions_UnwrapsClineNonStreamingEnvelope(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	body := []byte(`{"model":"kimi-k2.7-code","messages":[{"role":"user","content":"hello"}],"stream":false}`)
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/chat/completions", bytes.NewReader(body))
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	upstreamJSON := `{"success":true,"data":{"id":"gen_1","object":"chat.completion","created":1785491680,"model":"moonshotai/kimi-k2.7-code","choices":[{"index":0,"message":{"role":"assistant","content":"ok"},"finish_reason":"stop"}],"usage":{"prompt_tokens":7,"completion_tokens":2,"total_tokens":9}}}`
+	upstream := &httpUpstreamRecorder{resp: &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"application/json"}, "x-request-id": []string{"rid_cline_json"}},
+		Body:       io.NopCloser(strings.NewReader(upstreamJSON)),
+	}}
+
+	svc := &OpenAIGatewayService{
+		cfg:          rawChatCompletionsTestConfig(),
+		httpUpstream: upstream,
+	}
+	result, err := svc.forwardAsRawChatCompletions(context.Background(), c, rawChatCompletionsTestAccount(), body, "")
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Equal(t, 7, result.Usage.InputTokens)
+	require.Equal(t, 2, result.Usage.OutputTokens)
+	require.False(t, gjson.Get(rec.Body.String(), "success").Exists())
+	require.False(t, gjson.Get(rec.Body.String(), "data").Exists())
+	require.Equal(t, "gen_1", gjson.Get(rec.Body.String(), "id").String())
+	require.Equal(t, "ok", gjson.Get(rec.Body.String(), "choices.0.message.content").String())
+}
+
 func TestForwardAsRawChatCompletions_PreservesDeepSeekReasoningContentNonStreaming(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

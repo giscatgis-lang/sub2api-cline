@@ -405,6 +405,21 @@ func extractCCStreamUsage(payload string) *OpenAIUsage {
 	return &u
 }
 
+func unwrapClineChatCompletionEnvelope(body []byte) []byte {
+	if !gjson.GetBytes(body, "success").Bool() {
+		return body
+	}
+	data := gjson.GetBytes(body, "data")
+	if !data.IsObject() {
+		return body
+	}
+	choices := data.Get("choices")
+	if !choices.Exists() || !choices.IsArray() {
+		return body
+	}
+	return []byte(data.Raw)
+}
+
 // bufferRawChatCompletions 透传上游 CC 非流式 JSON 响应。
 func (s *OpenAIGatewayService) bufferRawChatCompletions(
 	c *gin.Context,
@@ -425,6 +440,7 @@ func (s *OpenAIGatewayService) bufferRawChatCompletions(
 		}
 		return nil, fmt.Errorf("read upstream body: %w", err)
 	}
+	respBody = unwrapClineChatCompletionEnvelope(respBody)
 
 	var usage OpenAIUsage
 	if parsedUsage, ok := extractOpenAIUsageFromJSONBytes(respBody); ok {

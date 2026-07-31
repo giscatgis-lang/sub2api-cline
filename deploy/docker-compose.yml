@@ -55,6 +55,27 @@ services:
       - ALIPAY_MOBILE_PRECREATE_DEEP_LINK=${ALIPAY_MOBILE_PRECREATE_DEEP_LINK:-}
 
       # =======================================================================
+      # Logging Configuration
+      # =======================================================================
+      - LOG_LEVEL=${LOG_LEVEL:-warn}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      - LOG_SERVICE_NAME=${LOG_SERVICE_NAME:-sub2api}
+      - LOG_ENV=${LOG_ENV:-production}
+      - LOG_CALLER=${LOG_CALLER:-true}
+      - LOG_STACKTRACE_LEVEL=${LOG_STACKTRACE_LEVEL:-error}
+      - LOG_OUTPUT_TO_STDOUT=${LOG_OUTPUT_TO_STDOUT:-true}
+      - LOG_OUTPUT_TO_FILE=${LOG_OUTPUT_TO_FILE:-true}
+      - LOG_OUTPUT_FILE_PATH=${LOG_OUTPUT_FILE_PATH:-}
+      - LOG_ROTATION_MAX_SIZE_MB=${LOG_ROTATION_MAX_SIZE_MB:-100}
+      - LOG_ROTATION_MAX_BACKUPS=${LOG_ROTATION_MAX_BACKUPS:-5}
+      - LOG_ROTATION_MAX_AGE_DAYS=${LOG_ROTATION_MAX_AGE_DAYS:-7}
+      - LOG_ROTATION_COMPRESS=${LOG_ROTATION_COMPRESS:-true}
+      - LOG_ROTATION_LOCAL_TIME=${LOG_ROTATION_LOCAL_TIME:-true}
+      - LOG_SAMPLING_ENABLED=${LOG_SAMPLING_ENABLED:-false}
+      - LOG_SAMPLING_INITIAL=${LOG_SAMPLING_INITIAL:-100}
+      - LOG_SAMPLING_THEREAFTER=${LOG_SAMPLING_THEREAFTER:-100}
+
+      # =======================================================================
       # Database Configuration (PostgreSQL)
       # =======================================================================
       - DATABASE_HOST=postgres
@@ -63,8 +84,8 @@ services:
       - DATABASE_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       - DATABASE_DBNAME=${POSTGRES_DB:-sub2api}
       - DATABASE_SSLMODE=disable
-      - DATABASE_MAX_OPEN_CONNS=${DATABASE_MAX_OPEN_CONNS:-50}
-      - DATABASE_MAX_IDLE_CONNS=${DATABASE_MAX_IDLE_CONNS:-10}
+      - DATABASE_MAX_OPEN_CONNS=${DATABASE_MAX_OPEN_CONNS:-120}
+      - DATABASE_MAX_IDLE_CONNS=${DATABASE_MAX_IDLE_CONNS:-40}
       - DATABASE_CONN_MAX_LIFETIME_MINUTES=${DATABASE_CONN_MAX_LIFETIME_MINUTES:-30}
       - DATABASE_CONN_MAX_IDLE_TIME_MINUTES=${DATABASE_CONN_MAX_IDLE_TIME_MINUTES:-5}
 
@@ -77,7 +98,7 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - REDIS_DB=${REDIS_DB:-0}
       - REDIS_POOL_SIZE=${REDIS_POOL_SIZE:-1024}
-      - REDIS_MIN_IDLE_CONNS=${REDIS_MIN_IDLE_CONNS:-10}
+      - REDIS_MIN_IDLE_CONNS=${REDIS_MIN_IDLE_CONNS:-64}
       - REDIS_ENABLE_TLS=${REDIS_ENABLE_TLS:-false}
 
       # =======================================================================
@@ -142,9 +163,9 @@ services:
       # Enable URL allowlist validation (false to skip allowlist checks)
       - SECURITY_URL_ALLOWLIST_ENABLED=${SECURITY_URL_ALLOWLIST_ENABLED:-false}
       # Allow insecure HTTP URLs when allowlist is disabled (default: true; set to false to require https)
-      - SECURITY_URL_ALLOWLIST_ALLOW_INSECURE_HTTP=${SECURITY_URL_ALLOWLIST_ALLOW_INSECURE_HTTP:-true}
+      - SECURITY_URL_ALLOWLIST_ALLOW_INSECURE_HTTP=${SECURITY_URL_ALLOWLIST_ALLOW_INSECURE_HTTP:-false}
       # Allow private IP addresses for upstream/pricing/CRS (default: true; set to false to block private hosts)
-      - SECURITY_URL_ALLOWLIST_ALLOW_PRIVATE_HOSTS=${SECURITY_URL_ALLOWLIST_ALLOW_PRIVATE_HOSTS:-true}
+      - SECURITY_URL_ALLOWLIST_ALLOW_PRIVATE_HOSTS=${SECURITY_URL_ALLOWLIST_ALLOW_PRIVATE_HOSTS:-false}
       # Upstream hosts whitelist (comma-separated, only used when enabled=true)
       - SECURITY_URL_ALLOWLIST_UPSTREAM_HOSTS=${SECURITY_URL_ALLOWLIST_UPSTREAM_HOSTS:-}
 
@@ -168,6 +189,9 @@ services:
       - GATEWAY_OPENAI_PROXY_STREAM_CIRCUIT_FAILURE_THRESHOLD=${GATEWAY_OPENAI_PROXY_STREAM_CIRCUIT_FAILURE_THRESHOLD:-2}
       - GATEWAY_OPENAI_PROXY_STREAM_CIRCUIT_WINDOW_SECONDS=${GATEWAY_OPENAI_PROXY_STREAM_CIRCUIT_WINDOW_SECONDS:-60}
       - GATEWAY_OPENAI_PROXY_STREAM_CIRCUIT_TTL_SECONDS=${GATEWAY_OPENAI_PROXY_STREAM_CIRCUIT_TTL_SECONDS:-600}
+      - GATEWAY_MAX_CONNS_PER_HOST=${GATEWAY_MAX_CONNS_PER_HOST:-1024}
+      - GATEWAY_MAX_IDLE_CONNS=${GATEWAY_MAX_IDLE_CONNS:-2048}
+      - GATEWAY_MAX_IDLE_CONNS_PER_HOST=${GATEWAY_MAX_IDLE_CONNS_PER_HOST:-512}
       - GATEWAY_IMAGE_STREAM_DATA_INTERVAL_TIMEOUT=${GATEWAY_IMAGE_STREAM_DATA_INTERVAL_TIMEOUT:-900}
       - GATEWAY_IMAGE_STREAM_KEEPALIVE_INTERVAL=${GATEWAY_IMAGE_STREAM_KEEPALIVE_INTERVAL:-10}
       - GATEWAY_IMAGE_CONCURRENCY_ENABLED=${GATEWAY_IMAGE_CONCURRENCY_ENABLED:-false}
@@ -215,10 +239,10 @@ services:
     # the variables are not set.
     command: >
       postgres
-      -c max_connections=${POSTGRES_MAX_CONNECTIONS:-100}
-      -c shared_buffers=${POSTGRES_SHARED_BUFFERS:-128MB}
+      -c max_connections=${POSTGRES_MAX_CONNECTIONS:-300}
+      -c shared_buffers=${POSTGRES_SHARED_BUFFERS:-1GB}
       -c effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-4GB}
-      -c maintenance_work_mem=${POSTGRES_MAINTENANCE_WORK_MEM:-64MB}
+      -c maintenance_work_mem=${POSTGRES_MAINTENANCE_WORK_MEM:-128MB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -268,6 +292,7 @@ services:
         --save 60 1 \
         --appendonly yes \
         --appendfsync everysec \
+        --maxclients ${REDIS_MAXCLIENTS:-20000} \
         ${REDIS_PASSWORD:+--requirepass "$REDIS_PASSWORD"}'
     environment:
       - TZ=${TZ:-Asia/Shanghai}

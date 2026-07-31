@@ -138,6 +138,28 @@ RUN addgroup -g 1000 sub2api && \
 # Set working directory
 WORKDIR /app
 
+# Production-oriented runtime defaults for single-container platforms such as Zeabur.
+# Secrets and service endpoints are still expected to be provided by environment variables.
+ENV SERVER_MODE=release \
+    LOG_LEVEL=warn \
+    LOG_FORMAT=json \
+    LOG_ENV=production \
+    LOG_OUTPUT_TO_STDOUT=true \
+    LOG_OUTPUT_TO_FILE=true \
+    LOG_ROTATION_MAX_SIZE_MB=100 \
+    LOG_ROTATION_MAX_BACKUPS=5 \
+    DATABASE_MAX_OPEN_CONNS=120 \
+    DATABASE_MAX_IDLE_CONNS=40 \
+    DATABASE_CONN_MAX_LIFETIME_MINUTES=30 \
+    DATABASE_CONN_MAX_IDLE_TIME_MINUTES=5 \
+    REDIS_POOL_SIZE=1024 \
+    REDIS_MIN_IDLE_CONNS=64 \
+    GATEWAY_MAX_CONNS_PER_HOST=1024 \
+    GATEWAY_MAX_IDLE_CONNS=2048 \
+    GATEWAY_MAX_IDLE_CONNS_PER_HOST=512 \
+    SECURITY_URL_ALLOWLIST_ALLOW_INSECURE_HTTP=false \
+    SECURITY_URL_ALLOWLIST_ALLOW_PRIVATE_HOSTS=false
+
 # Copy binary/resources with ownership to avoid extra full-layer chown copy
 COPY --from=backend-builder --chown=sub2api:sub2api /app/sub2api /app/sub2api
 COPY --from=backend-builder --chown=sub2api:sub2api /app/backend/resources /app/resources
