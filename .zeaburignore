@@ -1,0 +1,58 @@
+# Zeabur CLI upload context.
+# Keep only files needed by the root Dockerfile build.
+
+# VCS / local editor state
+.git/
+.github/
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Local runtime data produced by Docker Compose validation
+deploy/data/
+deploy/postgres_data/
+deploy/redis_data/
+logs/
+tmp/
+temp/
+
+# Dependencies and build outputs are installed/built in Docker
+node_modules/
+frontend/node_modules/
+frontend/dist/
+backend/vendor/
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+config.yaml
+config.local.yaml
+
+# Non-image docs/assets not copied by Dockerfile
+*.md
+docs/
+assets/
+openspec/
+skills/
+tools/
+
+# Frontend imports these markdown files at build time.
+!frontend/docs/legal/
+!frontend/docs/legal/*.md
+
+# Keep required deployment entrypoint, ignore other helper artifacts
+deploy/*
+!deploy/docker-entrypoint.sh
+
+# Build release image from the main Dockerfile only
+Dockerfile.goreleaser
+.goreleaser.yaml
+.goreleaser.simple.yaml
