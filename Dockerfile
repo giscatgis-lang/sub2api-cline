@@ -39,7 +39,6 @@ RUN --mount=type=cache,id=sub2api-pnpm-store,target=/root/.local/share/pnpm/stor
 # frontend/docs/legal/*.md?raw. Keep this subtree inside frontend/ so hosted
 # build uploaders that prune root docs/ still include the legal markdown.
 COPY frontend/ ./
-COPY frontend/docs/legal/ /app/docs/legal/
 RUN pnpm run build
 
 # -----------------------------------------------------------------------------

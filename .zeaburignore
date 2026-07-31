@@ -37,16 +37,17 @@ config.yaml
 config.local.yaml
 
 # Non-image docs/assets not copied by Dockerfile
-*.md
-docs/
-assets/
-openspec/
-skills/
-tools/
+/*.md
+/docs/
+/assets/
+/openspec/
+/skills/
+/tools/
 
 # Frontend imports these markdown files at build time.
+!frontend/docs/
 !frontend/docs/legal/
-!frontend/docs/legal/*.md
+!frontend/docs/legal/**
 
 # Build release image from the main Dockerfile only
 Dockerfile.goreleaser
