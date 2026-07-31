@@ -48,10 +48,6 @@ tools/
 !frontend/docs/legal/
 !frontend/docs/legal/*.md
 
-# Keep required deployment entrypoint, ignore other helper artifacts
-deploy/*
-!deploy/docker-entrypoint.sh
-
 # Build release image from the main Dockerfile only
 Dockerfile.goreleaser
 .goreleaser.yaml
